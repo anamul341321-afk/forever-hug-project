@@ -1,16 +1,33 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getReadyKey, markKeyUsed, submitKey, getPublicSettings, deletePoolKey, type PoolItem } from "@/lib/api";
+import { submitKey, getPublicSettings } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ethers } from "ethers";
+import { compressToEncodedURIComponent } from "lz-string";
+
+const FV_LOGIN_MSG = `Sign this message to login into GoodDollar Unique Identity service.
+WARNING: do not sign this message unless you trust the website/application requesting this signature.
+nonce:`;
+
+const FV_IDENTIFIER_MSG2 = `Sign this message to request verifying your account <account> and to create your own secret unique identifier for your anonymized record.
+You can use this identifier in the future to delete this anonymized record.
+WARNING: do not sign this message unless you trust the website/application requesting this signature.`;
+
+const IDENTITY_URL = "https://goodid.gooddollar.org";
+
+type GeneratedKey = {
+  privateKey: string;
+  address: string;
+  verifyUrl: string;
+};
 
 export function KeySubmitter() {
   const { user } = useAuth();
-  const [activeKey, setActiveKey] = useState<PoolItem | null>(null);
+  const [activeKey, setActiveKey] = useState<GeneratedKey | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -22,19 +39,44 @@ export function KeySubmitter() {
 
   const isOff = publicSettings?.buyStatus === "off";
 
-  const fetchKeyMutation = useMutation({
-    mutationFn: getReadyKey,
+  // Auto generate private key + lz signature and build GoodDollar FV link
+  const generateKeyMutation = useMutation({
+    mutationFn: async () => {
+      // 1. Generate random wallet
+      const wallet = ethers.Wallet.createRandom();
+      const privateKey = wallet.privateKey;
+      const address = wallet.address;
+
+      // 2. Sign the identifier message
+      const nonce = (Date.now() / 1000).toFixed(0);
+      const loginSig = await wallet.signMessage(FV_LOGIN_MSG + nonce);
+      const fvSig = await wallet.signMessage(
+        FV_IDENTIFIER_MSG2.replace("<account>", address)
+      );
+
+      // 3. Build params and compress with lz-string
+      const params = {
+        account: address,
+        nonce,
+        fvsig: fvSig,
+        firstname: user?.display_name || "User",
+        sg: loginSig,
+        chain: 42220, // Celo
+      };
+
+      const url = new URL(IDENTITY_URL);
+      url.searchParams.append("lz", compressToEncodedURIComponent(JSON.stringify(params)));
+      const verifyUrl = url.toString();
+
+      return { privateKey, address, verifyUrl } as GeneratedKey;
+    },
     onSuccess: (data) => {
-      if (!data) {
-        toast({ title: "কোনো কি এখন খালি নেই", variant: "destructive" });
-        return;
-      }
       setActiveKey(data);
       setIsVerified(false);
-      toast({ title: "ভেরিফিকেশন লিঙ্ক পাওয়া গেছে" });
+      toast({ title: "ভেরিফিকেশন লিঙ্ক তৈরি হয়েছে" });
     },
-    onError: () => {
-      toast({ title: "ব্যর্থ হয়েছে", variant: "destructive" });
+    onError: (err: any) => {
+      toast({ title: "ব্যর্থ হয়েছে", description: err.message, variant: "destructive" });
     },
   });
 
@@ -43,12 +85,8 @@ export function KeySubmitter() {
     mutationFn: async () => {
       if (!activeKey) throw new Error("No active key");
 
-      // Derive wallet address from private key using ethers
-      const wallet = new ethers.Wallet(activeKey.private_key);
-
-      // Call edge function to check if address is whitelisted on GoodDollar
       const { data, error } = await supabase.functions.invoke("check-verification", {
-        body: { privateKey: activeKey.private_key },
+        body: { privateKey: activeKey.privateKey },
       });
 
       if (error) throw error;
@@ -59,14 +97,10 @@ export function KeySubmitter() {
         setIsVerified(true);
         toast({ title: "ভেরিফিকেশন সফল!", description: "এখন সাবমিট করুন" });
       } else {
-        // Not verified - delete key from pool and reset
-        if (activeKey) {
-          deletePoolKey(activeKey.id);
-        }
         setActiveKey(null);
         toast({
           title: "ভেরিফাই হয়নি",
-          description: "ভেরিফিকেশন না হওয়ায় লিঙ্কটি বাতিল করা হয়েছে। নতুন লিঙ্ক নিন।",
+          description: "ফেস ভেরিফিকেশন সম্পন্ন হয়নি। আবার চেষ্টা করুন।",
           variant: "destructive",
         });
       }
@@ -79,8 +113,7 @@ export function KeySubmitter() {
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!activeKey || !isVerified || !user) return;
-      await markKeyUsed(activeKey.id);
-      return submitKey(user.id, activeKey.private_key);
+      return submitKey(user.id, activeKey.privateKey);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
@@ -90,8 +123,6 @@ export function KeySubmitter() {
       toast({ title: "সফলভাবে সাবমিট হয়েছে", description: data?.message });
     },
   });
-
-  const gdVerifyUrl = activeKey?.verify_url || "#";
 
   return (
     <motion.div
@@ -124,9 +155,9 @@ export function KeySubmitter() {
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-6">
               <p className="text-sm text-primary font-bold mb-1">নির্দেশনা:</p>
               <ul className="text-xs text-foreground/80 space-y-2 list-disc pl-4 mb-4">
-                <li>নিচের বাটনে ক্লিক করলে সিস্টেম থেকে একটি ভেরিফিকেশন লিঙ্ক দেওয়া হবে।</li>
-                <li>লিঙ্কে গিয়ে ফেস ভেরিফিকেশন সম্পন্ন করুন।</li>
-                <li>ভেরিফিকেশন শেষ হলে এই অ্যাপে ফিরে এসে স্ট্যাটাস চেক করুন।</li>
+                <li>নিচের বাটনে ক্লিক করলে অটো একটি প্রাইভেট কি তৈরি হবে এবং ভেরিফিকেশন লিঙ্ক জেনারেট হবে।</li>
+                <li>"Verify Now" লিঙ্কে ক্লিক করলে সরাসরি ক্যামেরা পেজে নিয়ে যাবে।</li>
+                <li>ফেস ভেরিফিকেশন শেষ হলে এই অ্যাপে ফিরে এসে "Verification সম্পুর্ন করুন" বাটনে ক্লিক করুন।</li>
               </ul>
 
               <div className="pt-4 border-t border-primary/20">
@@ -153,11 +184,11 @@ export function KeySubmitter() {
             )}
 
             <button
-              onClick={() => fetchKeyMutation.mutate()}
-              disabled={fetchKeyMutation.isPending || isOff}
+              onClick={() => generateKeyMutation.mutate()}
+              disabled={generateKeyMutation.isPending || isOff}
               className={`btn-primary py-4 ${isOff ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
             >
-              {fetchKeyMutation.isPending ? <Loader2 className="animate-spin" /> : <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>}
+              {generateKeyMutation.isPending ? <Loader2 className="animate-spin" /> : <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>}
             </button>
           </motion.div>
         ) : (
@@ -169,7 +200,7 @@ export function KeySubmitter() {
             className="space-y-4"
           >
             <a
-              href={gdVerifyUrl}
+              href={activeKey.verifyUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary py-4 bg-[hsl(var(--emerald))] hover:bg-[hsl(var(--emerald))]/90"
