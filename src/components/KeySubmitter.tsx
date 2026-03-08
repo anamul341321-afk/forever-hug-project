@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getReadyKey, markKeyUsed, submitKey, getPublicSettings, type PoolItem } from "@/lib/api";
+import { getReadyKey, markKeyUsed, submitKey, getPublicSettings, deletePoolKey, type PoolItem } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ethers } from "ethers";
 
 export function KeySubmitter() {
   const { user } = useAuth();
@@ -33,6 +35,44 @@ export function KeySubmitter() {
     },
     onError: () => {
       toast({ title: "ব্যর্থ হয়েছে", variant: "destructive" });
+    },
+  });
+
+  // Real verification check via Celo blockchain
+  const checkVerificationMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeKey) throw new Error("No active key");
+
+      // Derive wallet address from private key using ethers
+      const wallet = new ethers.Wallet(activeKey.private_key);
+
+      // Call edge function to check if address is whitelisted on GoodDollar
+      const { data, error } = await supabase.functions.invoke("check-verification", {
+        body: { privateKey: activeKey.private_key },
+      });
+
+      if (error) throw error;
+      return data as { isVerified: boolean; address: string; message: string };
+    },
+    onSuccess: (data) => {
+      if (data.isVerified) {
+        setIsVerified(true);
+        toast({ title: "ভেরিফিকেশন সফল!", description: "এখন সাবমিট করুন" });
+      } else {
+        // Not verified - delete key from pool and reset
+        if (activeKey) {
+          deletePoolKey(activeKey.id);
+        }
+        setActiveKey(null);
+        toast({
+          title: "ভেরিফাই হয়নি",
+          description: "ভেরিফিকেশন না হওয়ায় লিঙ্কটি বাতিল করা হয়েছে। নতুন লিঙ্ক নিন।",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: () => {
+      toast({ title: "ভেরিফিকেশন চেক ব্যর্থ হয়েছে", variant: "destructive" });
     },
   });
 
@@ -138,11 +178,13 @@ export function KeySubmitter() {
             </a>
 
             <button
-              onClick={() => setIsVerified(true)}
-              disabled={isVerified}
+              onClick={() => checkVerificationMutation.mutate()}
+              disabled={checkVerificationMutation.isPending || isVerified}
               className="btn-primary py-4 bg-[hsl(var(--emerald))] hover:bg-[hsl(var(--emerald))]/90"
             >
-              {isVerified ? (
+              {checkVerificationMutation.isPending ? (
+                <Loader2 className="animate-spin w-5 h-5" />
+              ) : isVerified ? (
                 <><CheckCircle className="w-5 h-5" /> ভেরিফিকেশন সফল</>
               ) : (
                 <><CheckCircle className="w-5 h-5" /> Verification সম্পুর্ন করুন</>
