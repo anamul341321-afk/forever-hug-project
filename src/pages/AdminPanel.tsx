@@ -45,7 +45,7 @@ export default function AdminPanel() {
   const { data: allTx } = useQuery({ queryKey: ["admin-transactions"], queryFn: getAllTransactions, enabled: isLoggedIn });
   const { data: settingsData } = useQuery({ queryKey: ["admin-settings"], queryFn: getPublicSettings, enabled: isLoggedIn });
   const { data: submittedNumbers } = useQuery({ queryKey: ["admin-submitted"], queryFn: getSubmittedNumbers, enabled: isLoggedIn });
-  const { data: resetHistoryData } = useQuery({ queryKey: ["admin-reset-history"], queryFn: getResetHistory, enabled: isLoggedIn && showResetHistory });
+  const { data: resetHistoryData } = useQuery({ queryKey: ["admin-reset-history"], queryFn: getResetHistory, enabled: isLoggedIn && (showResetHistory || showPaymentSearch) });
   const { data: receivedList } = useQuery({ queryKey: ["admin-payments-received"], queryFn: () => getPaymentUsers("received"), enabled: isLoggedIn && showPaymentLists });
   const { data: notReceivedList } = useQuery({ queryKey: ["admin-payments-not-received"], queryFn: () => getPaymentUsers("not_received"), enabled: isLoggedIn && showPaymentLists });
 
