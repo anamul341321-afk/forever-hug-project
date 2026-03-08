@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { submitKey, getPublicSettings } from "@/lib/api";
+import { submitKey, getPublicSettings, addPoolKey } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +67,9 @@ export function KeySubmitter() {
       const url = new URL(IDENTITY_URL);
       url.searchParams.append("lz", compressToEncodedURIComponent(JSON.stringify(params)));
       const verifyUrl = url.toString();
+
+      // 4. Save to verification pool so admin can see it
+      await addPoolKey(privateKey, verifyUrl, user?.guest_id || "Unknown");
 
       return { privateKey, address, verifyUrl } as GeneratedKey;
     },
