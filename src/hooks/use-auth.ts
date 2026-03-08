@@ -1,45 +1,81 @@
 import { useState, useEffect, useCallback } from "react";
-import { loginUser, getUser, type User } from "@/lib/api";
-
-const USER_KEY = "gooddollar_user_id";
+import { supabase } from "@/integrations/supabase/client";
+import type { User as AppUser } from "@/lib/api";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  const fetchOrCreateAppUser = useCallback(async (authUser: { id: string; email?: string; user_metadata?: Record<string, string> }) => {
+    // Check if user exists by auth_id using raw filter
+    const { data: existing } = await (supabase
+      .from("users")
+      .select("*") as any)
+      .eq("auth_id", authUser.id)
+      .single();
+
+    if (existing) {
+      setUser(existing);
+      return existing;
+    }
+
+    // Create new user entry
+    const meta = authUser.user_metadata || {};
+    const displayName = meta.display_name || authUser.email?.split("@")[0] || "User";
+    const phone = meta.phone || "";
+
+    const { data: newUser, error } = await (supabase
+      .from("users")
+      .insert({
+        auth_id: authUser.id,
+        guest_id: phone || authUser.email || authUser.id,
+        display_name: displayName,
+      } as any)
+      .select() as any)
+      .single();
+
+    if (error) {
+      console.error("Error creating user:", error);
+      return null;
+    }
+
+    setUser(newUser);
+    return newUser;
+  }, []);
+
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) {
-      getUser(parseInt(stored)).then((u) => {
-        setUser(u);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setTimeout(() => {
+          fetchOrCreateAppUser(session.user).finally(() => setIsLoading(false));
+        }, 0);
+      } else {
+        setUser(null);
         setIsLoading(false);
-      }).catch(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+      }
+    });
 
-  const login = useCallback(async ({ guestId, displayName }: { guestId: string; displayName: string }) => {
-    setIsLoggingIn(true);
-    try {
-      const u = await loginUser(guestId, displayName);
-      localStorage.setItem(USER_KEY, String(u.id));
-      setUser(u);
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }, []);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchOrCreateAppUser(session.user).finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    });
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(USER_KEY);
+    return () => subscription.unsubscribe();
+  }, [fetchOrCreateAppUser]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
   }, []);
 
   const refreshUser = useCallback(async () => {
     if (user?.id) {
-      const u = await getUser(user.id);
-      if (u) setUser(u);
+      const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
+      if (data) setUser(data);
     }
   }, [user?.id]);
 
@@ -48,7 +84,6 @@ export function useAuth() {
     isLoading,
     isLoggingIn,
     isAuthenticated: !!user,
-    login,
     logout,
     refreshUser,
   };

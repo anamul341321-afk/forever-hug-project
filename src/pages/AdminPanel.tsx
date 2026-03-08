@@ -296,15 +296,32 @@ export default function AdminPanel() {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input type="text" placeholder="নম্বর দিয়ে সার্চ..." value={resetHistorySearch} onChange={(e) => setResetHistorySearch(e.target.value)} className="input-field pl-10" />
               </div>
-              {resetHistoryData?.filter(i => !resetHistorySearch || i.phone_number.includes(resetHistorySearch)).map(item => (
-                <div key={item.id} className="bg-secondary/50 border border-[hsl(var(--cyan))]/10 rounded-xl p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm font-bold">{item.phone_number}</span>
-                    <span className="text-primary font-bold text-sm bg-primary/10 px-2 py-1 rounded-lg">{item.verified_count} টা</span>
+              {resetHistoryData?.filter(i => !resetHistorySearch || i.phone_number.includes(resetHistorySearch)).map(item => {
+                const matchedUser = users?.find(u => u.guest_id === item.phone_number);
+                return (
+                  <div key={item.id} className="bg-secondary/50 border border-[hsl(var(--cyan))]/10 rounded-xl p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full overflow-hidden bg-secondary border border-border flex-shrink-0 flex items-center justify-center">
+                        {matchedUser?.avatar_url ? (
+                          <img src={matchedUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-mono text-sm font-bold">{item.phone_number}</span>
+                            {matchedUser?.display_name && <span className="text-xs text-muted-foreground ml-2">({matchedUser.display_name})</span>}
+                          </div>
+                          <span className="text-primary font-bold text-sm bg-primary/10 px-2 py-1 rounded-lg">{item.verified_count} টা</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">অ্যাডমিন: {item.submitted_by} | {new Date(item.reset_at || "").toLocaleString("bn-BD")}</p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">অ্যাডমিন: {item.submitted_by} | {new Date(item.reset_at || "").toLocaleString("bn-BD")}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
