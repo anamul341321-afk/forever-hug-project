@@ -282,7 +282,6 @@ export default function AdminPanel() {
               )}
             </div>
           )}
-          )}
         </section>
 
         {/* Reset History */}
