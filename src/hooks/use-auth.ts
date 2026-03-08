@@ -7,16 +7,16 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const fetchOrCreateAppUser = useCallback(async (authUser: { id: string; email?: string; user_metadata?: any }) => {
-    // Check if user exists by auth_id
-    const { data: existing } = await supabase
+  const fetchOrCreateAppUser = useCallback(async (authUser: { id: string; email?: string; user_metadata?: Record<string, string> }) => {
+    // Check if user exists by auth_id using raw filter
+    const { data: existing } = await (supabase
       .from("users")
-      .select("*")
-      .eq("auth_id" as any, authUser.id)
+      .select("*") as any)
+      .eq("auth_id", authUser.id)
       .single();
 
     if (existing) {
-      setUser(existing as any);
+      setUser(existing);
       return existing;
     }
 
@@ -25,14 +25,14 @@ export function useAuth() {
     const displayName = meta.display_name || authUser.email?.split("@")[0] || "User";
     const phone = meta.phone || "";
 
-    const { data: newUser, error } = await supabase
+    const { data: newUser, error } = await (supabase
       .from("users")
       .insert({
         auth_id: authUser.id,
         guest_id: phone || authUser.email || authUser.id,
         display_name: displayName,
       } as any)
-      .select()
+      .select() as any)
       .single();
 
     if (error) {
@@ -40,12 +40,12 @@ export function useAuth() {
       return null;
     }
 
-    setUser(newUser as any);
+    setUser(newUser);
     return newUser;
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setTimeout(() => {
           fetchOrCreateAppUser(session.user).finally(() => setIsLoading(false));
