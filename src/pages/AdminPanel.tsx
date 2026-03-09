@@ -188,7 +188,11 @@ export default function AdminPanel() {
                 <input type="number" value={bonusTarget} onChange={(e) => setBonusTarget(e.target.value)} className="input-field" />
               </div>
             </div>
-            <button onClick={() => rateMutation.mutate({ customNotice, bonusStatus, bonusTarget: parseInt(bonusTarget) })}
+            <div>
+              <label className="block text-sm text-muted-foreground mb-1">ভিডিও লিঙ্ক (ইউজারদের দেখানো হবে)</label>
+              <input type="text" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} className="input-field" placeholder="https://youtube.com/..." />
+            </div>
+            <button onClick={() => rateMutation.mutate({ customNotice, bonusStatus, bonusTarget: parseInt(bonusTarget), videoUrl })}
               disabled={rateMutation.isPending} className="btn-primary py-3">
               {rateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "সেটিংস সেভ করুন"}
             </button>
