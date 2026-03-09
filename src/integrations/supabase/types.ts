@@ -143,6 +143,7 @@ export type Database = {
           key_count: number
           payment_scheduled_at: string | null
           payment_status: string
+          watched_video_url: string | null
         }
         Insert: {
           auth_id?: string | null
@@ -156,6 +157,7 @@ export type Database = {
           key_count?: number
           payment_scheduled_at?: string | null
           payment_status?: string
+          watched_video_url?: string | null
         }
         Update: {
           auth_id?: string | null
@@ -169,6 +171,7 @@ export type Database = {
           key_count?: number
           payment_scheduled_at?: string | null
           payment_status?: string
+          watched_video_url?: string | null
         }
         Relationships: []
       }
