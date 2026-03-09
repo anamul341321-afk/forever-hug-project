@@ -273,7 +273,10 @@ export default function AdminPanel() {
                 <>
                   {/* Submitted Numbers Results */}
                   {(() => {
-                    const results = submittedNumbers?.filter(s => s.payment_number?.includes(paymentNumberSearch.trim())) || [];
+                    const q = paymentNumberSearch.trim();
+                    const results = submittedNumbers?.filter(s => 
+                      s.payment_number?.includes(q) || s.phone_number.includes(q) || s.submitted_by?.includes(q)
+                    ) || [];
                     if (results.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">সাবমিটেড নম্বরে কিছু পাওয়া যায়নি</p>;
                     return (
                       <div className="space-y-2">
