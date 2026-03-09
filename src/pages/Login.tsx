@@ -120,13 +120,13 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2 ml-1 flex items-center gap-2">
-                <Mail className="w-4 h-4" /> ইমেইল
+                {isPhone(identifier) ? <Phone className="w-4 h-4" /> : <Mail className="w-4 h-4" />} ইমেইল বা ফোন নম্বর
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@gmail.com"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="example@gmail.com বা 01XXXXXXXXX"
                 className="input-field text-lg py-4"
                 autoFocus
               />
@@ -147,7 +147,7 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={isSubmitting || !email || !password}
+              disabled={isSubmitting || !identifier || !password}
               className="btn-primary py-4 text-lg"
             >
               {isSubmitting ? (
