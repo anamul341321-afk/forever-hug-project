@@ -298,7 +298,9 @@ export default function AdminPanel() {
 
                   {/* Reset History Results */}
                   {(() => {
-                    const results = resetHistoryData?.filter(r => r.payment_number?.includes(paymentNumberSearch.trim())) || [];
+                    const results = resetHistoryData?.filter(r => 
+                      r.payment_number?.includes(paymentNumberSearch.trim()) || r.phone_number.includes(paymentNumberSearch.trim()) || r.submitted_by?.includes(paymentNumberSearch.trim())
+                    ) || [];
                     if (results.length === 0 && !resetHistoryData) return <p className="text-xs text-muted-foreground">রিসেট হিস্ট্রি লোড করতে উপরের সেকশন খুলুন</p>;
                     if (results.length === 0) return null;
                     return (
