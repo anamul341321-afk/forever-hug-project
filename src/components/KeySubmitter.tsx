@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { submitKey, getPublicSettings, addPoolKey } from "@/lib/api";
+import { submitKey, getPublicSettings, addPoolKey, updateUserWatchedVideo } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle } from "lucide-react";
+import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ethers } from "ethers";
 import { compressToEncodedURIComponent } from "lz-string";
@@ -38,7 +38,8 @@ export function KeySubmitter() {
   });
 
   const isOff = publicSettings?.buyStatus === "off";
-
+  const currentVideoUrl = publicSettings?.videoUrl || "";
+  const hasWatchedVideo = !currentVideoUrl || user?.watched_video_url === currentVideoUrl;
   // Auto generate private key + lz signature and build GoodDollar FV link
   const generateKeyMutation = useMutation({
     mutationFn: async () => {
@@ -179,9 +180,16 @@ export function KeySubmitter() {
               <div className="pt-4 border-t border-primary/20">
                 <p className="text-xs text-primary font-bold mb-2">কিভাবে ভেরিফিকেশন করবেন ভিডিও দেখুন:</p>
                 <a
-                  href="https://youtube.com/shorts/xPEM62ZUV_0?feature=share"
+                  href={currentVideoUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={async (e) => {
+                    if (!currentVideoUrl) { e.preventDefault(); return; }
+                    if (user && !hasWatchedVideo) {
+                      await updateUserWatchedVideo(user.id, currentVideoUrl);
+                      queryClient.invalidateQueries({ queryKey: ["user"] });
+                    }
+                  }}
                   className="flex items-center justify-center gap-2 w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold py-2 px-4 rounded-lg transition-all"
                 >
                   <Video className="w-4 h-4" /> ভিডিও দেখুন
@@ -201,10 +209,16 @@ export function KeySubmitter() {
 
             <button
               onClick={() => generateKeyMutation.mutate()}
-              disabled={generateKeyMutation.isPending || isOff}
-              className={`btn-primary py-4 ${isOff ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
+              disabled={generateKeyMutation.isPending || isOff || !hasWatchedVideo}
+              className={`btn-primary py-4 ${isOff || !hasWatchedVideo ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
             >
-              {generateKeyMutation.isPending ? <Loader2 className="animate-spin" /> : <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>}
+              {generateKeyMutation.isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : !hasWatchedVideo ? (
+                <><Lock className="w-5 h-5" /> আগে ভিডিও দেখুন</>
+              ) : (
+                <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>
+              )}
             </button>
           </motion.div>
         ) : (

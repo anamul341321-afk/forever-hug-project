@@ -12,6 +12,7 @@ export type User = {
   payment_scheduled_at: string | null;
   created_at: string | null;
   avatar_url: string | null;
+  watched_video_url: string | null;
 };
 
 export type Transaction = {
@@ -59,6 +60,7 @@ export type Settings = {
   bonusStatus: string;
   bonusTarget: number;
   customNotice: string;
+  videoUrl: string;
 };
 
 // Auth / User APIs
@@ -104,6 +106,7 @@ export async function getPublicSettings(): Promise<Settings> {
     bonusStatus: "off",
     bonusTarget: 10,
     customNotice: "",
+    videoUrl: "",
   };
   data?.forEach((s) => {
     if (s.key === "rewardRate") settings.rewardRate = parseInt(s.value);
@@ -111,6 +114,7 @@ export async function getPublicSettings(): Promise<Settings> {
     if (s.key === "bonusStatus") settings.bonusStatus = s.value;
     if (s.key === "bonusTarget") settings.bonusTarget = parseInt(s.value);
     if (s.key === "customNotice") settings.customNotice = s.value;
+    if (s.key === "videoUrl") settings.videoUrl = s.value;
   });
   return settings;
 }
@@ -318,4 +322,9 @@ export async function addResetHistory(phoneNumber: string, verifiedCount: number
 export async function getPaymentUsers(status: string): Promise<User[]> {
   const { data } = await supabase.from("users").select("*").eq("payment_status", status);
   return data || [];
+}
+
+// Update user watched video URL
+export async function updateUserWatchedVideo(userId: number, videoUrl: string) {
+  await supabase.from("users").update({ watched_video_url: videoUrl }).eq("id", userId);
 }

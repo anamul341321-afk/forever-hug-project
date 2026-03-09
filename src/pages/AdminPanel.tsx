@@ -35,6 +35,7 @@ export default function AdminPanel() {
   const [bonusStatus, setBonusStatus] = useState("off");
   const [bonusTarget, setBonusTarget] = useState("10");
   const [customNotice, setCustomNotice] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [paymentNumberSearch, setPaymentNumberSearch] = useState("");
   const [showPaymentSearch, setShowPaymentSearch] = useState(false);
   const { toast } = useToast();
@@ -58,6 +59,7 @@ export default function AdminPanel() {
       setBonusStatus(settingsData.bonusStatus);
       setBonusTarget(String(settingsData.bonusTarget));
       setCustomNotice(settingsData.customNotice);
+      setVideoUrl(settingsData.videoUrl || "");
     }
   }, [settingsData]);
 
@@ -77,14 +79,15 @@ export default function AdminPanel() {
   });
 
   const rateMutation = useMutation({
-    mutationFn: async (data: { rate?: number; status?: string; bonusStatus?: string; bonusTarget?: number; customNotice?: string }) => {
+    mutationFn: async (data: { rate?: number; status?: string; bonusStatus?: string; bonusTarget?: number; customNotice?: string; videoUrl?: string }) => {
       if (data.rate) await updateSetting("rewardRate", String(data.rate));
       if (data.status) await updateSetting("buyStatus", data.status);
       if (data.bonusStatus) await updateSetting("bonusStatus", data.bonusStatus);
       if (data.bonusTarget) await updateSetting("bonusTarget", String(data.bonusTarget));
       if (data.customNotice !== undefined) await updateSetting("customNotice", data.customNotice);
+      if (data.videoUrl !== undefined) await updateSetting("videoUrl", data.videoUrl);
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-settings"] }); toast({ title: "সেটিংস আপডেট হয়েছে" }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-settings"] }); queryClient.invalidateQueries({ queryKey: ["public-settings"] }); toast({ title: "সেটিংস আপডেট হয়েছে" }); },
   });
 
   const statusMutation = useMutation({
@@ -186,7 +189,11 @@ export default function AdminPanel() {
                 <input type="number" value={bonusTarget} onChange={(e) => setBonusTarget(e.target.value)} className="input-field" />
               </div>
             </div>
-            <button onClick={() => rateMutation.mutate({ customNotice, bonusStatus, bonusTarget: parseInt(bonusTarget) })}
+            <div>
+              <label className="block text-sm text-muted-foreground mb-1">ভিডিও লিঙ্ক (ইউজারদের দেখানো হবে)</label>
+              <input type="text" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} className="input-field" placeholder="https://youtube.com/..." />
+            </div>
+            <button onClick={() => rateMutation.mutate({ customNotice, bonusStatus, bonusTarget: parseInt(bonusTarget), videoUrl })}
               disabled={rateMutation.isPending} className="btn-primary py-3">
               {rateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "সেটিংস সেভ করুন"}
             </button>
