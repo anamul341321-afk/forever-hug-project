@@ -209,10 +209,16 @@ export function KeySubmitter() {
 
             <button
               onClick={() => generateKeyMutation.mutate()}
-              disabled={generateKeyMutation.isPending || isOff}
-              className={`btn-primary py-4 ${isOff ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
+              disabled={generateKeyMutation.isPending || isOff || !hasWatchedVideo}
+              className={`btn-primary py-4 ${isOff || !hasWatchedVideo ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
             >
-              {generateKeyMutation.isPending ? <Loader2 className="animate-spin" /> : <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>}
+              {generateKeyMutation.isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : !hasWatchedVideo ? (
+                <><Lock className="w-5 h-5" /> আগে ভিডিও দেখুন</>
+              ) : (
+                <><Key className="w-5 h-5" /> ফেস ভেরিফিকেশন শুরু করুন</>
+              )}
             </button>
           </motion.div>
         ) : (
