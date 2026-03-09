@@ -82,7 +82,7 @@ export default function Login() {
             <ShieldCheck className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60 mb-2">
-            Secure Earn
+            Good App
           </h1>
           <p className="text-muted-foreground text-lg">
             আপনার অ্যাকাউন্টে লগইন করুন
