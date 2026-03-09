@@ -180,9 +180,16 @@ export function KeySubmitter() {
               <div className="pt-4 border-t border-primary/20">
                 <p className="text-xs text-primary font-bold mb-2">কিভাবে ভেরিফিকেশন করবেন ভিডিও দেখুন:</p>
                 <a
-                  href="https://youtube.com/shorts/xPEM62ZUV_0?feature=share"
+                  href={currentVideoUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={async (e) => {
+                    if (!currentVideoUrl) { e.preventDefault(); return; }
+                    if (user && !hasWatchedVideo) {
+                      await updateUserWatchedVideo(user.id, currentVideoUrl);
+                      queryClient.invalidateQueries({ queryKey: ["user"] });
+                    }
+                  }}
                   className="flex items-center justify-center gap-2 w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold py-2 px-4 rounded-lg transition-all"
                 >
                   <Video className="w-4 h-4" /> ভিডিও দেখুন
