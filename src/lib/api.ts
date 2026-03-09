@@ -59,6 +59,7 @@ export type Settings = {
   bonusStatus: string;
   bonusTarget: number;
   customNotice: string;
+  videoUrl: string;
 };
 
 // Auth / User APIs
