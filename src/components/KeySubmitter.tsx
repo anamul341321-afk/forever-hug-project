@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { submitKey, getPublicSettings, addPoolKey } from "@/lib/api";
+import { submitKey, getPublicSettings, addPoolKey, updateUserWatchedVideo } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle } from "lucide-react";
+import { Key, ShieldCheck, Loader2, ExternalLink, CheckCircle, Video, AlertCircle, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ethers } from "ethers";
 import { compressToEncodedURIComponent } from "lz-string";
