@@ -138,12 +138,19 @@ export default function AdminPanel() {
       for (const phoneNumber of numbers) {
         const user = users?.find(u => u.guest_id === phoneNumber);
         if (user) {
-          await addResetHistory(phoneNumber, user.key_count, "Admin");
+          const submittedInfo = submittedNumbers?.find(s => s.phone_number === phoneNumber);
+          await addResetHistory(
+            phoneNumber,
+            user.key_count,
+            "Admin",
+            submittedInfo?.payment_number || undefined,
+            submittedInfo?.payment_method || undefined
+          );
           await resetUserKeyCount(user.id);
         }
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-users"] }); setBatchNumbers(""); toast({ title: "রিসেট হয়েছে" }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-users"] }); queryClient.invalidateQueries({ queryKey: ["admin-reset-history"] }); setBatchNumbers(""); toast({ title: "রিসেট হয়েছে" }); },
   });
 
   const filteredUsers = users?.filter(u => searchQuery ? u.guest_id.toLowerCase().includes(searchQuery.toLowerCase()) : true);
