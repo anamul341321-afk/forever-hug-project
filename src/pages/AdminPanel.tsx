@@ -229,7 +229,10 @@ export default function AdminPanel() {
           {showSubmittedNumbers && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-[hsl(var(--purple))]">মোট ভেরিফাইড: {submittedNumbers?.reduce((sum, s) => sum + (s.verified_count || 0), 0) || 0}</p>
+                <p className="text-sm font-bold text-[hsl(var(--purple))]">মোট ভেরিফাইড: {submittedNumbers?.reduce((sum, s) => {
+                  const u = users?.find(u => u.guest_id === s.phone_number);
+                  return sum + (u?.key_count || 0);
+                }, 0) || 0}</p>
                 <button onClick={() => clearSubmittedMutation.mutate()} disabled={clearSubmittedMutation.isPending} className="px-4 py-2 bg-destructive text-destructive-foreground font-bold rounded-xl text-sm flex items-center gap-2">
                   {clearSubmittedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><RefreshCcw className="w-4 h-4" /> Reset All</>}
                 </button>
