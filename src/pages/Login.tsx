@@ -28,10 +28,27 @@ export default function Login() {
     try {
       const fakeEmail = `${phone.trim()}@goodapp.local`;
 
-      const { error } = await supabase.auth.signInWithPassword({
+      let { error } = await supabase.auth.signInWithPassword({
         email: fakeEmail,
         password,
       });
+
+      // If failed, try looking up the old email from users table
+      if (error && error.message === "Invalid login credentials") {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("email")
+          .eq("guest_id", phone.trim())
+          .single();
+
+        if (userData?.email && userData.email !== fakeEmail) {
+          const retryResult = await supabase.auth.signInWithPassword({
+            email: userData.email,
+            password,
+          });
+          error = retryResult.error;
+        }
+      }
 
       if (error) {
         if (error.message === "Invalid login credentials") {
