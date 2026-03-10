@@ -9,8 +9,9 @@ import {
   addSubmittedNumbers, deleteSubmittedNumber, clearAllSubmittedNumbers,
   addResetHistory,
 } from "@/lib/api";
-import { ShieldCheck, UserX, UserCheck, CheckCircle, XCircle, Loader2, Coins, Key, Search, RefreshCcw, Copy, Users, ChevronDown, ChevronUp, Trash2, Bell, Send, History } from "lucide-react";
+import { ShieldCheck, UserX, UserCheck, CheckCircle, XCircle, Loader2, Coins, Key, Search, RefreshCcw, Copy, Users, ChevronDown, ChevronUp, Trash2, Bell, Send, History, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const ADMIN_PASSWORD = "Anamul-963050";
 const POOL_SECRET = "Anamul-984516";
