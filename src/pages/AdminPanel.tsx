@@ -507,10 +507,98 @@ export default function AdminPanel() {
           )}
         </section>
 
-        {/* User List */}
+        {/* User Management */}
+        <section className="glass-card p-6 rounded-2xl border-2 border-[hsl(var(--emerald))]/30">
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowUserManagement(!showUserManagement)}>
+            <div className="flex items-center gap-3"><Lock className="w-6 h-6 text-[hsl(var(--emerald))]" /><h2 className="text-xl font-bold">ইউজার ম্যানেজমেন্ট ({users?.length || 0})</h2></div>
+            {showUserManagement ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {showUserManagement && (
+            <div className="mt-6 space-y-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" placeholder="ফোন নম্বর দিয়ে সার্চ করুন..." value={userMgmtSearch} onChange={(e) => setUserMgmtSearch(e.target.value)} className="input-field pl-10" />
+              </div>
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                {users?.filter(u => !userMgmtSearch || u.guest_id.includes(userMgmtSearch)).map(u => (
+                  <div key={u.id} className="bg-secondary/50 border border-border rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-sm font-bold">{u.guest_id}</p>
+                        <p className="text-xs text-muted-foreground">{u.display_name || "Unknown"} • Verified: <span className="text-primary font-bold">{u.key_count || 0}</span></p>
+                        {u.email && <p className="text-[10px] text-muted-foreground">Email: {u.email}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => blockMutation.mutate({ id: u.id, isBlocked: !u.is_blocked })}
+                          className={`p-2 rounded-lg transition-colors ${u.is_blocked ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
+                          {u.is_blocked ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => resetCountMutation.mutate(u.id)} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-primary transition-colors">
+                          <RefreshCcw className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Password Change */}
+                    {editingPasswordUserId === u.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type={showPassword[u.id] ? "text" : "password"}
+                            value={newPasswordValue}
+                            onChange={(e) => setNewPasswordValue(e.target.value)}
+                            placeholder="নতুন পাসওয়ার্ড..."
+                            className="input-field pr-10 text-sm"
+                          />
+                          <button onClick={() => setShowPassword(p => ({ ...p, [u.id]: !p[u.id] }))} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            {showPassword[u.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <button
+                          disabled={resettingPassword || !newPasswordValue || newPasswordValue.length < 6}
+                          onClick={async () => {
+                            if (!u.auth_id) { toast({ title: "এই ইউজারের auth ID নেই", variant: "destructive" }); return; }
+                            setResettingPassword(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+                                body: { auth_id: u.auth_id, new_password: newPasswordValue, admin_password: ADMIN_PASSWORD },
+                              });
+                              if (error) throw error;
+                              if (data?.error) throw new Error(data.error);
+                              toast({ title: "পাসওয়ার্ড পরিবর্তন হয়েছে ✓" });
+                              setEditingPasswordUserId(null);
+                              setNewPasswordValue("");
+                            } catch (err: any) {
+                              toast({ title: "ব্যর্থ", description: err.message, variant: "destructive" });
+                            } finally {
+                              setResettingPassword(false);
+                            }
+                          }}
+                          className="px-3 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm"
+                        >
+                          {resettingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : "সেভ"}
+                        </button>
+                        <button onClick={() => { setEditingPasswordUserId(null); setNewPasswordValue(""); }} className="p-2 text-muted-foreground hover:text-destructive">
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setEditingPasswordUserId(u.id); setNewPasswordValue(""); }}
+                        className="text-xs text-[hsl(var(--cyan))] hover:underline flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> পাসওয়ার্ড পরিবর্তন করুন
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Old User List (kept for backwards compat) */}
         <section className="space-y-4">
           <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowUserList(!showUserList)}>
-            <h2 className="text-xl font-bold">ব্যবহারকারী তালিকা</h2>
+            <h2 className="text-xl font-bold">ব্যবহারকারী তালিকা (সংক্ষিপ্ত)</h2>
             {showUserList ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {showUserList && (

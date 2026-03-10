@@ -177,8 +177,42 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Support Section */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <div className="glass-card rounded-3xl p-6 space-y-4">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <Headphones className="w-5 h-5 text-primary" /> সাপোর্ট
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-xl">
+                <User className="w-5 h-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">ডেভেলপার</p>
+                  <p className="font-bold text-sm">Md Anamul Haque</p>
+                </div>
+              </div>
+              <a href="https://wa.me/8801892564963" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-[hsl(var(--emerald))]/10 border border-[hsl(var(--emerald))]/20 rounded-xl hover:bg-[hsl(var(--emerald))]/20 transition-colors">
+                <MessageCircle className="w-5 h-5 text-[hsl(var(--emerald))] flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">WhatsApp</p>
+                  <p className="font-bold text-sm text-[hsl(var(--emerald))]">01892564963</p>
+                </div>
+              </a>
+              <a href="https://t.me/gooddollar_earn" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-[hsl(var(--blue))]/10 border border-[hsl(var(--blue))]/20 rounded-xl hover:bg-[hsl(var(--blue))]/20 transition-colors">
+                <Send className="w-5 h-5 text-[hsl(var(--blue))] flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Telegram Group</p>
+                  <p className="font-bold text-sm text-[hsl(var(--blue))]">@gooddollar_earn</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Transaction History */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <h3 className="text-lg font-bold mb-4 px-2">লেনদেনের ইতিহাস</h3>
           <TransactionList />
         </motion.div>
