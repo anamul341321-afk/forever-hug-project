@@ -39,6 +39,12 @@ export default function AdminPanel() {
   const [videoUrl, setVideoUrl] = useState("");
   const [paymentNumberSearch, setPaymentNumberSearch] = useState("");
   const [showPaymentSearch, setShowPaymentSearch] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [userMgmtSearch, setUserMgmtSearch] = useState("");
+  const [editingPasswordUserId, setEditingPasswordUserId] = useState<number | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [showPassword, setShowPassword] = useState<Record<number, boolean>>({});
+  const [resettingPassword, setResettingPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
