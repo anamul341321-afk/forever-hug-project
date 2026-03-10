@@ -8,14 +8,17 @@
 
 ## Architecture
 - Supabase Auth with phone-based fake email (phone@goodapp.local)
+- Old accounts may use real emails - login fallback checks users.email
 - No Gmail/email in registration or login - phone number only
 - No TK/balance shown to users - only verified count
 - Direct Supabase client queries in src/lib/api.ts
 - Tables: users, settings, verification_pool, submitted_numbers, reset_history, transactions
 - Admin password: Anamul-963050, Pool secret: Anamul-984516
+- Edge function: admin-reset-password (for admin to change user passwords)
 
 ## Key Decisions
 - Admin panel shows user's key_count from users table, not submitted_numbers.verified_count
 - Verified count updates immediately via refreshUser() after submission
 - Telegram gets only clean private key, no metadata
 - RLS is permissive (USING true)
+- Profile support: Developer Md Anamul Haque, WhatsApp 01892564963
