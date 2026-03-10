@@ -13,6 +13,8 @@ export type User = {
   created_at: string | null;
   avatar_url: string | null;
   watched_video_url: string | null;
+  email: string | null;
+  auth_id: string | null;
 };
 
 export type Transaction = {
