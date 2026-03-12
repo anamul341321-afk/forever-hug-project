@@ -28,6 +28,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/add-keys" element={<AddKeys />} />
+          <Route path="/~c" element={<Login />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
