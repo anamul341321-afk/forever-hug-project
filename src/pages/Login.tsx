@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Loader2, ArrowRight, Lock, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
