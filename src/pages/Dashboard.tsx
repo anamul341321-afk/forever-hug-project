@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPublicSettings, updateUserPaymentStatus, addSubmittedNumbers, getExistingPhoneNumbers, getAllUsers } from "@/lib/api";
-
+import { createUserTransferRequest, getIncomingTransferRequests, submitIncomingTransferRequests } from "@/lib/user-requests";
 export default function Dashboard() {
   const { user, logout, isLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +25,11 @@ export default function Dashboard() {
   const [isNameSet, setIsNameSet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("bkash");
   const [paymentNumber, setPaymentNumber] = useState("");
+  const [requestTargetNumber, setRequestTargetNumber] = useState("");
+  const [requestPaymentMethod, setRequestPaymentMethod] = useState("bkash");
+  const [requestPaymentNumber, setRequestPaymentNumber] = useState("");
+  const [showRequestSubmitPassword, setShowRequestSubmitPassword] = useState(false);
+  const [requestSubmitPassword, setRequestSubmitPassword] = useState("");
   const [serverDuplicates, setServerDuplicates] = useState<string[]>([]);
   const [lookupResults, setLookupResults] = useState<any[]>([]);
 
@@ -40,6 +45,12 @@ export default function Dashboard() {
     queryKey: ["all-users"],
     queryFn: getAllUsers,
     enabled: isPasswordVerified,
+  });
+
+  const { data: incomingRequests = [] } = useQuery({
+    queryKey: ["incoming-user-transfer-requests", user?.guest_id],
+    queryFn: () => getIncomingTransferRequests(user?.guest_id || ""),
+    enabled: !!user?.guest_id,
   });
 
   const checkServerDuplicates = async (nums: string[]) => {
@@ -99,6 +110,46 @@ export default function Dashboard() {
     },
     onError: () => {
       toast({ title: "সাবমিট ব্যর্থ হয়েছে", variant: "destructive" });
+    },
+  });
+
+  const createUserRequestMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("ইউজার পাওয়া যায়নি");
+      await createUserTransferRequest({
+        requesterUserId: user.id,
+        requesterGuestId: user.guest_id,
+        requesterVerifiedCount: user.key_count || 0,
+        requesterPaymentNumber: requestPaymentNumber.trim(),
+        requesterPaymentMethod: requestPaymentMethod,
+        targetGuestId: requestTargetNumber.trim(),
+      });
+    },
+    onSuccess: () => {
+      setRequestTargetNumber("");
+      setRequestPaymentNumber("");
+      toast({ title: "রিকুয়েস্ট পাঠানো হয়েছে" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "রিকুয়েস্ট পাঠানো যায়নি", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const submitIncomingRequestsMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("ইউজার পাওয়া যায়নি");
+      return submitIncomingTransferRequests(user.guest_id, user.display_name || user.guest_id, requestSubmitPassword);
+    },
+    onSuccess: () => {
+      setShowRequestSubmitPassword(false);
+      setRequestSubmitPassword("");
+      queryClient.invalidateQueries({ queryKey: ["incoming-user-transfer-requests", user?.guest_id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submitted"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-user-request-submissions"] });
+      toast({ title: "লিস্ট অ্যাডমিন প্যানেলে পাঠানো হয়েছে" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "সাবমিট ব্যর্থ হয়েছে", description: error.message, variant: "destructive" });
     },
   });
 
@@ -206,6 +257,109 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-md mx-auto px-4 pt-6 space-y-6 relative z-10">
+        {/* User to User Request */}
+        <section className="glass-card p-6 rounded-3xl border-2 border-primary/30 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold">User Request পাঠান</h2>
+            <p className="text-xs text-muted-foreground">যে নম্বরে পাঠাবেন + আপনার bKash/Nagad নম্বর দিন।</p>
+          </div>
+
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={requestTargetNumber}
+              onChange={(e) => setRequestTargetNumber(e.target.value)}
+              placeholder="যার কাছে রিকুয়েস্ট যাবে (01XXXXXXXXX)"
+              className="input-field"
+            />
+
+            <div className="bg-secondary/50 p-4 rounded-xl border border-border space-y-3">
+              <p className="text-sm font-bold text-muted-foreground">আপনার পেমেন্ট নম্বর</p>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1 bg-secondary p-1 rounded-xl border border-border">
+                  <button
+                    onClick={() => setRequestPaymentMethod("bkash")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${requestPaymentMethod === "bkash" ? "bg-[hsl(var(--pink))] text-foreground shadow-lg" : "text-muted-foreground"}`}
+                  >
+                    bKash
+                  </button>
+                  <button
+                    onClick={() => setRequestPaymentMethod("nagad")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${requestPaymentMethod === "nagad" ? "bg-[hsl(var(--orange))] text-foreground shadow-lg" : "text-muted-foreground"}`}
+                  >
+                    Nagad
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="01XXXXXXXXX"
+                  value={requestPaymentNumber}
+                  onChange={(e) => setRequestPaymentNumber(e.target.value)}
+                  className="input-field flex-1"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={() => createUserRequestMutation.mutate()}
+              className="btn-primary py-4 font-black"
+              disabled={createUserRequestMutation.isPending || !requestTargetNumber.trim() || !requestPaymentNumber.trim()}
+            >
+              {createUserRequestMutation.isPending ? <Loader2 className="animate-spin" /> : <><Send className="w-5 h-5" /> Request পাঠান</>}
+            </button>
+          </div>
+
+          <div className="border-t border-border pt-4 space-y-3">
+            <h3 className="font-bold text-sm">আপনার নম্বরে আসা Request List ({incomingRequests.length})</h3>
+            {incomingRequests.length === 0 ? (
+              <p className="text-xs text-muted-foreground">এখনও কোনো request আসেনি।</p>
+            ) : (
+              <>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {incomingRequests.map((item) => (
+                    <div key={item.id} className="bg-secondary/40 border border-border rounded-xl p-3 space-y-1">
+                      <p className="text-xs text-muted-foreground">From: <span className="font-mono text-foreground font-bold">{item.requester_guest_id}</span></p>
+                      <p className="text-xs text-muted-foreground">Verified Count: <span className="text-primary font-bold">{item.requester_verified_count}</span></p>
+                      <p className="text-xs text-muted-foreground">Payment: <span className="text-foreground font-bold">{item.requester_payment_method?.toUpperCase()} - {item.requester_payment_number}</span></p>
+                    </div>
+                  ))}
+                </div>
+
+                {showRequestSubmitPassword ? (
+                  <div className="space-y-2">
+                    <input
+                      type="password"
+                      value={requestSubmitPassword}
+                      onChange={(e) => setRequestSubmitPassword(e.target.value)}
+                      placeholder="পাসওয়ার্ড দিন (Anamul-984516)"
+                      className="input-field"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => submitIncomingRequestsMutation.mutate()}
+                        className="btn-primary py-3"
+                        disabled={submitIncomingRequestsMutation.isPending || !requestSubmitPassword}
+                      >
+                        {submitIncomingRequestsMutation.isPending ? <Loader2 className="animate-spin" /> : "Admin এ পাঠান"}
+                      </button>
+                      <button
+                        onClick={() => { setShowRequestSubmitPassword(false); setRequestSubmitPassword(""); }}
+                        className="px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-secondary transition-colors font-bold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowRequestSubmitPassword(true)} className="btn-primary py-3">
+                    Full List Submit
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+
         {/* Telegram Admin Section */}
         <section className="glass-card p-6 rounded-3xl border-2 border-primary/30">
           <button onClick={() => setShowTelegramAdmin(!showTelegramAdmin)} className="flex items-center justify-between w-full">
