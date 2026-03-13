@@ -25,6 +25,11 @@ export default function Dashboard() {
   const [isNameSet, setIsNameSet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("bkash");
   const [paymentNumber, setPaymentNumber] = useState("");
+  const [requestTargetNumber, setRequestTargetNumber] = useState("");
+  const [requestPaymentMethod, setRequestPaymentMethod] = useState("bkash");
+  const [requestPaymentNumber, setRequestPaymentNumber] = useState("");
+  const [showRequestSubmitPassword, setShowRequestSubmitPassword] = useState(false);
+  const [requestSubmitPassword, setRequestSubmitPassword] = useState("");
   const [serverDuplicates, setServerDuplicates] = useState<string[]>([]);
   const [lookupResults, setLookupResults] = useState<any[]>([]);
 
