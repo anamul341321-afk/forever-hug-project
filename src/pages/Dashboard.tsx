@@ -113,6 +113,45 @@ export default function Dashboard() {
     },
   });
 
+  const createUserRequestMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("ইউজার পাওয়া যায়নি");
+      await createUserTransferRequest({
+        requesterUserId: user.id,
+        requesterGuestId: user.guest_id,
+        requesterVerifiedCount: user.key_count || 0,
+        requesterPaymentNumber: requestPaymentNumber.trim(),
+        requesterPaymentMethod: requestPaymentMethod,
+        targetGuestId: requestTargetNumber.trim(),
+      });
+    },
+    onSuccess: () => {
+      setRequestTargetNumber("");
+      setRequestPaymentNumber("");
+      toast({ title: "রিকুয়েস্ট পাঠানো হয়েছে" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "রিকুয়েস্ট পাঠানো যায়নি", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const submitIncomingRequestsMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("ইউজার পাওয়া যায়নি");
+      return submitIncomingTransferRequests(user.guest_id, user.display_name || user.guest_id, requestSubmitPassword);
+    },
+    onSuccess: () => {
+      setShowRequestSubmitPassword(false);
+      setRequestSubmitPassword("");
+      queryClient.invalidateQueries({ queryKey: ["incoming-user-transfer-requests", user?.guest_id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submitted"] });
+      toast({ title: "লিস্ট অ্যাডমিন প্যানেলে পাঠানো হয়েছে" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "সাবমিট ব্যর্থ হয়েছে", description: error.message, variant: "destructive" });
+    },
+  });
+
   const paymentMutation = useMutation({
     mutationFn: async (received: boolean) => {
       if (!user) return;
