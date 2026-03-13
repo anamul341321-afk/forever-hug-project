@@ -130,6 +130,114 @@ export type Database = {
           },
         ]
       }
+      user_request_submissions: {
+        Row: {
+          id: string
+          request_count: number
+          submitted_at: string
+          submitted_to_admin_by: string
+          target_display_name: string | null
+          target_guest_id: string
+          target_user_id: number | null
+          target_verified_count: number
+        }
+        Insert: {
+          id?: string
+          request_count?: number
+          submitted_at?: string
+          submitted_to_admin_by?: string
+          target_display_name?: string | null
+          target_guest_id: string
+          target_user_id?: number | null
+          target_verified_count?: number
+        }
+        Update: {
+          id?: string
+          request_count?: number
+          submitted_at?: string
+          submitted_to_admin_by?: string
+          target_display_name?: string | null
+          target_guest_id?: string
+          target_user_id?: number | null
+          target_verified_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_request_submissions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_transfer_requests: {
+        Row: {
+          created_at: string
+          id: number
+          requester_guest_id: string
+          requester_payment_method: string | null
+          requester_payment_number: string
+          requester_user_id: number
+          requester_verified_count: number
+          status: string
+          submitted_at: string | null
+          submitted_batch_id: string | null
+          target_guest_id: string
+          target_user_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          requester_guest_id: string
+          requester_payment_method?: string | null
+          requester_payment_number: string
+          requester_user_id: number
+          requester_verified_count?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_batch_id?: string | null
+          target_guest_id: string
+          target_user_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          requester_guest_id?: string
+          requester_payment_method?: string | null
+          requester_payment_number?: string
+          requester_user_id?: number
+          requester_verified_count?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_batch_id?: string | null
+          target_guest_id?: string
+          target_user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_transfer_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_transfer_requests_submitted_batch_id_fkey"
+            columns: ["submitted_batch_id"]
+            isOneToOne: false
+            referencedRelation: "user_request_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_transfer_requests_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           auth_id: string | null
@@ -210,7 +318,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      submit_user_request_batch: {
+        Args: {
+          p_password: string
+          p_submitter_name: string
+          p_target_guest_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
