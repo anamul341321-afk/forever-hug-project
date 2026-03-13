@@ -29,6 +29,7 @@ export default function AdminPanel() {
   const [showUserList, setShowUserList] = useState(false);
   const [showPaymentLists, setShowPaymentLists] = useState(false);
   const [showSubmittedNumbers, setShowSubmittedNumbers] = useState(false);
+  const [showUserRequestSubmissions, setShowUserRequestSubmissions] = useState(false);
   const [showResetHistory, setShowResetHistory] = useState(false);
   const [resetHistorySearch, setResetHistorySearch] = useState("");
   const [poolPassword, setPoolPassword] = useState("");
