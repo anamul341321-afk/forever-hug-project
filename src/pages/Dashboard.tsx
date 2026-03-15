@@ -357,31 +357,29 @@ export default function Dashboard() {
                       className="input-field"
                     />
                     
-                    <div className="bg-secondary/50 p-3 rounded-xl border border-border space-y-2">
-                      <p className="text-sm font-bold text-muted-foreground">আপনার bKash/Nagad নম্বর (Admin এ যাবে)</p>
-                      <div className="flex gap-2">
-                        <div className="flex items-center gap-1 bg-secondary p-1 rounded-xl border border-border">
-                          <button
-                            onClick={() => setSubmitterPaymentMethod("bkash")}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${submitterPaymentMethod === "bkash" ? "bg-[hsl(var(--pink))] text-foreground shadow-lg" : "text-muted-foreground"}`}
-                          >
-                            bKash
-                          </button>
-                          <button
-                            onClick={() => setSubmitterPaymentMethod("nagad")}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${submitterPaymentMethod === "nagad" ? "bg-[hsl(var(--orange))] text-foreground shadow-lg" : "text-muted-foreground"}`}
-                          >
-                            Nagad
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="01XXXXXXXXX"
-                          value={submitterPaymentNumber}
-                          onChange={(e) => setSubmitterPaymentNumber(e.target.value)}
-                          className="input-field flex-1"
-                        />
+                    <div className="bg-secondary/50 p-4 rounded-xl border border-border space-y-3">
+                      <p className="text-sm font-bold text-foreground">আপনার bKash/Nagad নম্বর (Admin এ যাবে)</p>
+                      <div className="grid grid-cols-2 gap-2 bg-secondary p-1.5 rounded-xl border border-border">
+                        <button
+                          onClick={() => setSubmitterPaymentMethod("bkash")}
+                          className={`px-4 py-2.5 rounded-lg text-sm font-black transition-all ${submitterPaymentMethod === "bkash" ? "bg-[hsl(var(--pink))] text-foreground shadow-lg" : "text-muted-foreground"}`}
+                        >
+                          bKash
+                        </button>
+                        <button
+                          onClick={() => setSubmitterPaymentMethod("nagad")}
+                          className={`px-4 py-2.5 rounded-lg text-sm font-black transition-all ${submitterPaymentMethod === "nagad" ? "bg-[hsl(var(--orange))] text-foreground shadow-lg" : "text-muted-foreground"}`}
+                        >
+                          Nagad
+                        </button>
                       </div>
+                      <input
+                        type="text"
+                        placeholder="01XXXXXXXXX"
+                        value={submitterPaymentNumber}
+                        onChange={(e) => setSubmitterPaymentNumber(e.target.value)}
+                        className="input-field text-base py-3"
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
