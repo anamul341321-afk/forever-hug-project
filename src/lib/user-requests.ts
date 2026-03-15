@@ -65,7 +65,12 @@ export async function createUserTransferRequest(payload: {
     target_guest_id: payload.targetGuestId,
   });
 
-  if (error) throw error;
+  if (error) {
+    if ((error as any).code === "23505") {
+      throw new Error("আপনার আগের request এখনও active আছে। Admin reset/cancel না করা পর্যন্ত নতুন request দিতে পারবেন না।");
+    }
+    throw error;
+  }
 }
 
 export async function getIncomingTransferRequests(targetGuestId: string): Promise<UserTransferRequest[]> {
