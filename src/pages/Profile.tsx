@@ -100,6 +100,14 @@ export default function Profile() {
 
   const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString("bn-BD", { year: "numeric", month: "long", day: "numeric" }) : "—";
 
+  const requestStatusLabel: Record<string, { text: string; className: string }> = {
+    pending: { text: "Pending", className: "bg-[hsl(var(--amber))]/20 text-[hsl(var(--amber))]" },
+    submitted: { text: "Submitted", className: "bg-primary/20 text-primary" },
+    reset: { text: "Reset", className: "bg-[hsl(var(--cyan))]/20 text-[hsl(var(--cyan))]" },
+    cancelled: { text: "Cancelled", className: "bg-destructive/20 text-destructive" },
+    dismissed: { text: "Dismissed", className: "bg-muted text-muted-foreground" },
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
